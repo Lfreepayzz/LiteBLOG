@@ -1,0 +1,43 @@
+.admin-list-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 16px; margin-bottom: 12px; color: var(--muted); font-size: 13px; }
+.admin-list-toolbar p { margin: 0; }
+.admin-records { width: 100%; border: 1px solid var(--line); border-collapse: collapse; background: var(--card); text-align: start; }
+.admin-records :is(th, td) { padding: 12px 14px; text-align: start; vertical-align: middle; overflow-wrap: anywhere; }
+.admin-records thead th { border-bottom: 1px solid var(--line); font-weight: 600; }
+.admin-records tbody th { font-weight: 400; }
+.admin-records tbody tr:nth-child(odd) { background: var(--soft); }
+.admin-records tbody tr + tr { border-top: 1px solid #dcdcde; }
+.admin-topic-list th:first-child { width: 65%; }
+.admin-user-list th:last-child { width: 39%; }
+.admin-record-title { color: var(--link); font-weight: 650; }
+.admin-record-title:hover { text-decoration: underline; }
+.admin-record-meta, .admin-record-empty { color: var(--muted); font-size: 13px; }
+.admin-record-actions { display: flex; flex-wrap: wrap; gap: 2px 12px; }
+.admin-record-actions form, .admin-user-form { margin: 0; }
+.admin-content .admin-record-actions button { padding: 2px 0; border: 0; background: transparent; color: var(--link); font-size: 13px; }
+.admin-content .admin-record-actions button:hover { text-decoration: underline; }
+.admin-content .admin-record-actions .is-danger { color: #b32d2e; }
+.admin-record-state { display: inline-block; margin: 2px 6px 2px 0; padding: 2px 7px; border: 1px solid var(--line); border-radius: 3px; background: var(--card); color: var(--muted); font-size: 12px; }
+.admin-record-state.is-blue { border-color: #c5d9ed; background: #e8f1f8; color: var(--link); }
+.admin-user-identity, .admin-user-form, .admin-user-form .admin-user-developer { display: flex; align-items: center; gap: 8px; }
+.admin-user-identity .admin-record-meta { display: block; }
+.admin-user-avatar { display: grid; flex: 0 0 34px; place-items: center; height: 34px; border-radius: 50%; background: #e8f1f8; color: var(--link); font-weight: 650; }
+.admin-user-form { flex-wrap: wrap; align-items: end; }
+.admin-user-form label { display: grid; gap: 2px; color: var(--muted); font-size: 12px; }
+.admin-user-form .admin-control { min-height: 34px; padding: 4px 8px; }
+.admin-user-form .admin-user-developer { min-height: 34px; }
+.admin-user-developer input { margin: 0; accent-color: var(--accent); }
+.admin-content .admin-user-form .admin-secondary { min-height: 34px; border-color: var(--accent); background: var(--card); color: var(--link); }
+.admin-content .admin-user-form .admin-secondary:hover { background: #e8f1f8; }
+.admin-mobile-label { display: none; }
+
+@media (max-width: 760px) {
+    .admin-records, .admin-records tbody { display: block; }
+    .admin-records thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .admin-records tbody tr { display: flex; flex-wrap: wrap; gap: 0 12px; padding: 12px; }
+    .admin-records tbody th:first-child, .admin-record-empty, .admin-user-access { width: 100%; }
+    .admin-records tbody :is(th, td) { padding: 3px 0; }
+    .admin-records tbody .admin-user-access { padding-top: 8px; }
+    .admin-mobile-label { display: inline; }
+    .admin-content .admin-record-actions button { min-height: 36px; }
+    .admin-user-form .admin-control, .admin-user-form .admin-user-developer, .admin-content .admin-user-form .admin-secondary { min-height: 40px; }
+}
