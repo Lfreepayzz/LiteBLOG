@@ -12,7 +12,7 @@ $assets = '/templates/'.rawurlencode(basename(__DIR__)).'/assets/';
 
 $topicCount = null;
 $siteDays = null;
-$siteWordCount = null;
+$siteCharacters = null;
 $shortcuts = [
     ['#recent-posts', '全部', '◎'],
     ['/search', '发现', '✦'],
@@ -22,20 +22,13 @@ if ($isFeedPage) {
     if ($isForumPage) {
         if (preg_match('~\A<header class="home-heading"><div><h1>[^<]*</h1><span>([0-9,]+) [^<]*</span>~', $body, $count)) {
             $topicCount = $count[1];
-        }
-        $startDate = trim($settings['site_start_date'] ?? '');
-        if (preg_match('/\A(\d{4})-(\d{2})-(\d{2})\z/', $startDate, $dateParts)
-            && checkdate((int)$dateParts[2], (int)$dateParts[3], (int)$dateParts[1])) {
-            $today = new DateTimeImmutable('today');
-            $start = new DateTimeImmutable($startDate);
-            if ($start <= $today) $siteDays = $start->diff($today)->days;
-        }
-        $wordCount = trim($settings['site_word_count'] ?? '');
-        if (preg_match('/\A(?:\d+|\d+(?:\.\d+)?[km])\z/i', $wordCount)) {
-            $siteWordCount = strtolower($wordCount);
-            if (ctype_digit($wordCount) && (float)$wordCount >= 1000) {
-                $scale = (float)$wordCount >= 1000000 ? 1000000 : 1000;
-                $siteWordCount = rtrim(rtrim(number_format((float)$wordCount / $scale, 1, '.', ''), '0'), '.').($scale === 1000 ? 'k' : 'm');
+            $siteCharacters = theme_public_content_characters();
+            $startDate = trim($settings['site_start_date'] ?? '');
+            if (preg_match('/\A(\d{4})-(\d{2})-(\d{2})\z/', $startDate, $dateParts)
+                && checkdate((int)$dateParts[2], (int)$dateParts[3], (int)$dateParts[1])) {
+                $start = new DateTimeImmutable($startDate);
+                $today = new DateTimeImmutable('today');
+                if ($start <= $today) $siteDays = $start->diff($today)->days;
             }
         }
         preg_match_all('~<a class="nav-item(?: active)?" href="(/c/[0-9]+)"><span>([^<]*)</span></a>~', $left, $categories, PREG_SET_ORDER);
@@ -326,16 +319,26 @@ if ($hasPostHero) {
         <?php endif; ?>
         <section class="card-widget card-tags" id="forum-categories">
           <nav class="card-tag-cloud" aria-label="讨论分区"><a href="/">全部讨论</a><?= $left ?></nav>
-          <?php if ($topicCount !== null): ?>
-            <section class="card-webinfo" id="aside-site-info" aria-label="站点统计">
-              <dl class="webinfo">
-                <div class="webinfo-item"><dt class="webinfo-item-title"><span aria-hidden="true">▤</span>文章总数 :</dt><dd class="item-count" id="aside-topic-count"><?= e($topicCount) ?></dd></div>
-                <div class="webinfo-item"><dt class="webinfo-item-title"><span aria-hidden="true">◷</span>建站天数 :</dt><dd class="item-count"><?= $siteDays === null ? '待设置' : e($siteDays.' 天') ?></dd></div>
-                <div class="webinfo-item"><dt class="webinfo-item-title"><span aria-hidden="true">Aa</span>全站字数 :</dt><dd class="item-count"><?= e($siteWordCount ?? '待设置') ?></dd></div>
-              </dl>
-            </section>
-          <?php endif; ?>
         </section>
+        <?php if ($topicCount !== null): ?>
+          <section class="card-widget card-webinfo" id="aside-site-info" aria-labelledby="aside-site-info-title">
+            <h2 class="item-headline" id="aside-site-info-title">站点统计</h2>
+            <dl class="webinfo">
+              <div class="webinfo-item">
+                <dt class="webinfo-item-title">文章总数</dt>
+                <dd class="item-count" id="aside-topic-count"><?= e($topicCount) ?></dd>
+              </div>
+              <div class="webinfo-item">
+                <dt class="webinfo-item-title">建站天数</dt>
+                <dd class="item-count"><?= $siteDays === null ? '暂无数据' : e(number_format($siteDays).' 天') ?></dd>
+              </div>
+              <div class="webinfo-item">
+                <dt class="webinfo-item-title">全站字数</dt>
+                <dd class="item-count"><?= $siteCharacters === null ? '暂无数据' : e(number_format($siteCharacters).' 字') ?></dd>
+              </div>
+            </dl>
+          </section>
+        <?php endif; ?>
         <?= extension_slot('sidebar.sections', $slotContext) ?>
       </div>
     </aside>

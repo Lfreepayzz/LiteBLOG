@@ -42,7 +42,7 @@ if ($section === 'plugins' && array_key_exists('plugin', $_GET)) {
     return;
 }
 
-if ($section === 'themes' && array_key_exists('theme', $_GET)) {
+if ($section === 'themes' && $method === 'GET' && array_key_exists('theme', $_GET)) {
     $themeId = $_GET['theme'];
     if (!is_string($themeId) || !preg_match('/^[a-z][a-z0-9_-]{1,31}$/D', $themeId)) fail(400, '模板管理页面无效');
     $directory = $root.'/templates/'.$themeId;

@@ -11,7 +11,7 @@ function Require-Text([string]$RelativePath, [string]$Text, [string]$Message) {
 Require-Text 'index.php' 'Framework\Kernel' 'Application kernel is missing.'
 Require-Text 'index.php' 'app/application-routes.php' 'Application routes must register directly with the kernel router.'
 Require-Text 'index.php' 'home:v7:' 'Cursor-aware home feed cache key is missing.'
-Require-Text 'index.php' 'home-page:v7:' 'Anonymous homepage response cache is missing.'
+Require-Text 'index.php' 'home-page:v8:' 'Anonymous homepage response cache is missing.'
 Require-Text 'index.php' 'page_cache_read($pageCacheKey,120)' 'Homepage response cache must use the configured two-minute lifetime.'
 Require-Text 'app/reply-handler.php' 'notification_outbox' 'Replies must write notification work in their transaction.'
 if (([System.IO.File]::ReadAllText((Join-Path $root 'app/reply-handler.php'))).Contains('process_notification_outbox(1)')) { throw 'Web replies must not synchronously drain notification outbox.' }

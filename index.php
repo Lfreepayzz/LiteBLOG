@@ -119,7 +119,7 @@ $kernel->router->add('GET', '~^/(?:forum-(?:[2-9]|[1-9][0-9]+))?$~', static func
         (string)($config['locale']??'zh-CN'),
         json_encode($config['seo']??[], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?: '',
     ]));
-    $pageCacheKey='home-page:v7:'.$pageSize.':'.hash('sha256',$numbered?$request->path:$cursor).':'.$shellVersion.':'.(int)$versions['topics'].':'.(int)$versions['categories'].':'.(int)$versions['home-feed'].':'.(int)$versions['extension-read-pages'].':'.(int)$versions['plugins'].':'.(int)$versions['theme-settings:'.$theme];
+    $pageCacheKey='home-page:v8:'.$pageSize.':'.hash('sha256',$numbered?$request->path:$cursor).':'.$shellVersion.':'.(int)$versions['topics'].':'.(int)$versions['categories'].':'.(int)$versions['home-feed'].':'.(int)$versions['extension-read-pages'].':'.(int)$versions['plugins'].':'.(int)$versions['theme-settings:'.$theme];
     $cursorData=null;
     if($cursor!==''){$decoded=base64_decode(strtr($cursor,'-_','+/'),true);$candidate=is_string($decoded)?json_decode($decoded,true):null;if(!is_array($candidate)||!isset($candidate['p'],$candidate['d'],$candidate['i'])||!in_array((int)$candidate['p'],[0,1],true)||!is_string($candidate['d'])||!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{1,6})?$/',$candidate['d'])||(int)$candidate['i']<1)fail(400,'分页游标无效');$cursorData=['p'=>(int)$candidate['p'],'d'=>$candidate['d'],'i'=>(int)$candidate['i']];}
     if($anonymous&&($cachedPage=page_cache_read($pageCacheKey,120))!==null){

@@ -107,7 +107,7 @@ $siteName = $c['site'] ?? 'LiteBBS';
             <?=$body?>
             <?=$showAdminSlots ? extension_slot('admin.content.after', $adminContentView) : ''?>
         </div>
-        <footer class="admin-footer"><span>LiteBBS <?=e(LITEBBS_VERSION)?></span><a href="https://bolgk.eu.org/" target="_blank" rel="noopener noreferrer">提交 BUG</a></footer>
+        <footer class="admin-footer"><span>LiteBLOG <?=e(LITEBBS_VERSION)?></span><a href="https://bolgk.eu.org/" target="_blank" rel="noopener noreferrer">提交 BUG</a></footer>
     </main>
 </div>
 <script src="/assets/js/admin-menu.js?v=<?=filemtime(__DIR__.'/../assets/js/admin-menu.js')?>" defer></script>

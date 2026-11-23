@@ -124,6 +124,27 @@ function theme_current_settings(): array
     return theme_settings((string)(load_config()['theme'] ?? 'default'));
 }
 
+/** Count the characters in public Markdown post bodies, including replies. */
+function theme_public_content_characters(): ?int
+{
+    try {
+        $versions = cache_versions(['topics', 'categories']);
+        $key = 'public-content-characters:v1:'.$versions['topics'].':'.$versions['categories'];
+        [$characters] = public_cached($key, 300, static function (): array {
+            $count = h(
+                "SELECT COALESCE(SUM(CHAR_LENGTH(p.body_markdown)), 0)
+                 FROM posts p JOIN topics t ON t.id = p.topic_id JOIN categories c ON c.id = t.category_id
+                 WHERE p.status = 'normal' AND t.status = 'normal' AND c.is_visible = 1"
+            )->fetchColumn();
+            return [(int)$count];
+        });
+        return $characters;
+    } catch (PDOException $error) {
+        error_log('Could not count public content characters: '.$error->getMessage());
+        return null;
+    }
+}
+
 final class ThemeTrustedHtml
 {
     private function __construct(private string $html) {}
