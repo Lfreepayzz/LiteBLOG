@@ -9,9 +9,9 @@ LiteBLOG 是一个轻量 PHP + MySQL/ 博客程序，提供主题讨论、分区
 
 ## 截图
 
-![LiteBLOG Screenshot 1](https://raw.githubusercontent.com/Lfreepayzz/LiteBBS/refs/heads/main/img/1.png)
+![LiteBLOG Screenshot 1](https://raw.githubusercontent.com/Lfreepayzz/LiteBLOG/refs/heads/main/img/1.png)
 
-![LiteBLOG Screenshot 2](https://raw.githubusercontent.com/Lfreepayzz/LiteBBS/refs/heads/main/img/2.png)
+![LiteBLOG Screenshot 2](https://raw.githubusercontent.com/Lfreepayzz/LiteBLOG/refs/heads/main/img/2.png)
 
 
 
