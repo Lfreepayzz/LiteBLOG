@@ -147,15 +147,15 @@ function program_update_state(?array $next=null): ?array {
     $value=require $file;return is_array($value)?$value:null;
 }
 function program_update_http(string $url): string {
-    $context=stream_context_create(['http'=>['method'=>'GET','timeout'=>20,'ignore_errors'=>false,'header'=>"Accept: application/vnd.github+json\r\nUser-Agent: LiteBBS-updater\r\n"]]);
+    $context=stream_context_create(['http'=>['method'=>'GET','timeout'=>20,'ignore_errors'=>false,'header'=>"Accept: application/vnd.github+json\r\nUser-Agent: LiteBLOG-updater\r\n"]]);
     $data=@file_get_contents($url,false,$context);if($data===false)throw new RuntimeException('无法连接 GitHub');return $data;
 }
 function program_update_remote(): array {
-    $tree=json_decode(program_update_http('https://api.github.com/repos/Lfreepayzz/LiteBBS/git/trees/main?recursive=1'),true);
+    $tree=json_decode(program_update_http('https://api.github.com/repos/Lfreepayzz/LiteBLOG/git/trees/main?recursive=1'),true);
     if(!is_array($tree)||!isset($tree['sha'],$tree['tree'])||!is_array($tree['tree']))throw new RuntimeException('GitHub 更新清单无效');
     $files=[];foreach($tree['tree'] as $item){$path=(string)($item['path']??'');if(($item['type']??'')!=='blob'||!program_update_path_allowed($path))continue;$sha=(string)($item['sha']??'');if(!preg_match('/^[a-f0-9]{40}$/',$sha))throw new RuntimeException('GitHub 文件哈希无效');$files[$path]=$sha;}
     if(!$files)throw new RuntimeException('GitHub 更新清单为空');
-    return ['version'=>(string)$tree['sha'],'files'=>$files,'archive'=>'https://github.com/Lfreepayzz/LiteBBS/archive/'.rawurlencode((string)$tree['sha']).'.zip'];
+    return ['version'=>(string)$tree['sha'],'files'=>$files,'archive'=>'https://github.com/Lfreepayzz/LiteBLOG/archive/'.rawurlencode((string)$tree['sha']).'.zip'];
 }
 function program_update_path_allowed(string $path): bool {
     if($path===''||strpos($path,'\\')!==false||preg_match('~(^/|^[A-Za-z]:|(^|/)\.\.?(/|$))~',$path))return false;
@@ -166,7 +166,7 @@ function program_update_local_files(): array {
     $root=program_update_root();$files=[];$walk=function(string $dir,string $prefix)use(&$walk,&$files,$root):void{foreach(scandir($dir)?:[] as $name){if($name==='.'||$name==='..')continue;$relative=$prefix.$name;$full=$dir.'/'.$name;if(is_dir($full)){if(in_array($relative,['private','uploads','cache','market-packages','.git'],true))continue;$walk($full,$relative.'/');continue;}if(is_file($full)&&program_update_path_allowed($relative)){$data=@file_get_contents($full);if($data!==false)$files[$relative]=sha1('blob '.strlen($data)."\0".$data);}}};$walk($root,'');return $files;
 }
 function program_update_download(string $url,string $target): void {
-    $in=@fopen($url,'rb',false,stream_context_create(['http'=>['timeout'=>60,'follow_location'=>1,'header'=>"User-Agent: LiteBBS-updater\r\n"]]));if(!$in)throw new RuntimeException('无法下载 GitHub 更新包');$out=@fopen($target,'wb');if(!$out){fclose($in);throw new RuntimeException('无法创建更新临时文件');}$total=0;while(!feof($in)){$chunk=fread($in,1048576);if($chunk===false){fclose($in);fclose($out);throw new RuntimeException('更新包读取失败');}$total+=strlen($chunk);if($total>104857600){fclose($in);fclose($out);@unlink($target);throw new RuntimeException('更新包超过 100 MiB 限制');}fwrite($out,$chunk);}fclose($in);fclose($out);if($total<100)throw new RuntimeException('更新包为空');
+    $in=@fopen($url,'rb',false,stream_context_create(['http'=>['timeout'=>60,'follow_location'=>1,'header'=>"User-Agent: LiteBLOG-updater\r\n"]]));if(!$in)throw new RuntimeException('无法下载 GitHub 更新包');$out=@fopen($target,'wb');if(!$out){fclose($in);throw new RuntimeException('无法创建更新临时文件');}$total=0;while(!feof($in)){$chunk=fread($in,1048576);if($chunk===false){fclose($in);fclose($out);throw new RuntimeException('更新包读取失败');}$total+=strlen($chunk);if($total>104857600){fclose($in);fclose($out);@unlink($target);throw new RuntimeException('更新包超过 100 MiB 限制');}fwrite($out,$chunk);}fclose($in);fclose($out);if($total<100)throw new RuntimeException('更新包为空');
 }
 function program_update_restore(string $backup): void {
     if(!is_dir($backup))return;
