@@ -4,7 +4,7 @@ LiteBLOG 是一个轻量 PHP + MySQL/ 博客程序，提供主题讨论、分区
 
 ## 演示
 
-[BUG反馈](https://bolgk.eu.org/)
+[演示](https://forum.lxi.be/)
 
 
 ## 截图
