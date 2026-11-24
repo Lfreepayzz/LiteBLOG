@@ -60,10 +60,10 @@ function friend_links_application_response(Request $request): Response
         }
         audit('friend_links.applied', 'plugin_friend_link', null, ['url' => $url, 'source_url' => $sourceUrl]);
         friend_links_invalidate_sidebar();
-        $message = '申请已提交，管理员确认对方页面包含本站链接后会启用友情链接。';
+        $message = '申请已提交，管理员人工核验对方页面包含本站链接后会启用友情链接。';
     }
 
-    $body = '<section class="friend-links-application"><header class="friend-links-application-header"><span class="friend-links-eyebrow">LINK EXCHANGE</span><h1>申请友情链接</h1><p>先在贵站放置本站 HTTPS 链接，再提交申请。管理员将按您提供的页面进行确认，审核通过后会在侧边栏展示。</p></header><ol class="friend-links-steps"><li><span>01</span><div><strong>添加本站链接</strong><small>在贵站公开页面放置本站 HTTPS 链接。</small></div></li><li><span>02</span><div><strong>提交网站信息</strong><small>填写网站地址和本站链接所在的具体页面。</small></div></li><li><span>03</span><div><strong>等待确认</strong><small>管理员确认后，友情链接将自动启用。</small></div></li></ol>';
+    $body = '<section class="friend-links-application"><header class="friend-links-application-header"><span class="friend-links-eyebrow">LINK EXCHANGE</span><h1>申请友情链接</h1><p>先在贵站放置本站 HTTPS 链接，再提交申请。管理员将人工核验您提供的页面，审核通过后会在侧边栏展示。</p></header><ol class="friend-links-steps"><li><span>01</span><div><strong>添加本站链接</strong><small>在贵站公开页面放置本站 HTTPS 链接。</small></div></li><li><span>02</span><div><strong>提交网站信息</strong><small>填写网站地址和本站链接所在的具体页面。</small></div></li><li><span>03</span><div><strong>等待人工核验</strong><small>管理员人工确认后，友情链接将自动启用。</small></div></li></ol>';
     if ($message !== '') $body .= '<p class="friend-links-message">'.e($message).'</p>';
     $body .= '<form class="form friend-links-form" method="post" action="/friend-links/apply"><input type="hidden" name="csrf" value="'.e(csrf()).'"><h2>网站信息</h2><label>网站名称<input name="title" maxlength="100" placeholder="例如：示例社区" required><small>用于侧边栏显示，2 至 100 个字符。</small></label><label>友情链接地址<input type="url" name="url" maxlength="2048" placeholder="https://example.com/" required><small>访客点击后将前往此地址。</small></label><label>本站链接所在页<input type="url" name="source_url" maxlength="2048" placeholder="https://example.com/links" required><small>请填写已经放置本站链接的具体公开页面。</small></label><label>网站简介 <em>可选</em><textarea name="description" maxlength="255" rows="3" placeholder="用一句话介绍您的网站内容与定位。"></textarea><small>最多 255 个字符。</small></label><footer class="friend-links-submit"><span>提交即表示您确认链接页面可公开访问。</span><button class="primary" type="submit">提交友情链接申请</button></footer></form></section>';
     ob_start();

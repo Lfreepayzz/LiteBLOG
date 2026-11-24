@@ -4,15 +4,21 @@ require_once __DIR__.'/builtin-plugin-schema.php';
 require_once __DIR__.'/plugin-migrations.php';
 require_once __DIR__.'/extension-platform.php';
 
+function handle_admin_extensions_manage(\LiteBBS\Framework\Request $request): void
+{
+$path = $request->path;
+$method = $request->method;
+$query = $request->query;
+$post = $request->post;
 if (!in_array($path, ['/admin/themes', '/admin/plugins'], true) || !in_array($method, ['GET', 'POST'], true)) return;
 
 $actor = admin();
 $section = $path === '/admin/themes' ? 'themes' : 'plugins';
 $root = dirname(__DIR__);
 
-if ($section === 'plugins' && array_key_exists('plugin', $_GET)) {
-    $pluginId = $_GET['plugin'];
-    $pageName = $_GET['page'] ?? null;
+if ($section === 'plugins' && array_key_exists('plugin', $query)) {
+    $pluginId = $query['plugin'];
+    $pageName = $query['page'] ?? null;
     if (!is_string($pluginId) || !is_string($pageName)
         || !preg_match('/^[a-z][a-z0-9_-]{1,31}$/D', $pluginId)
         || !preg_match('/^[a-z][a-z0-9_-]{0,63}$/D', $pageName)) fail(400, '插件管理页面无效');
@@ -42,8 +48,8 @@ if ($section === 'plugins' && array_key_exists('plugin', $_GET)) {
     return;
 }
 
-if ($section === 'themes' && $method === 'GET' && array_key_exists('theme', $_GET)) {
-    $themeId = $_GET['theme'];
+if ($section === 'themes' && $method === 'GET' && array_key_exists('theme', $query)) {
+    $themeId = $query['theme'];
     if (!is_string($themeId) || !preg_match('/^[a-z][a-z0-9_-]{1,31}$/D', $themeId)) fail(400, '模板管理页面无效');
     $directory = $root.'/templates/'.$themeId;
     try { extension_validate_directory($directory, 'theme', $themeId); }
@@ -73,8 +79,8 @@ if ($section === 'themes' && $method === 'GET' && array_key_exists('theme', $_GE
 
 if ($method === 'POST') {
     require_post();
-    $name = (string)($_POST['name'] ?? '');
-    $action = (string)($_POST['action'] ?? '');
+    $name = (string)($post['name'] ?? '');
+    $action = (string)($post['action'] ?? '');
     if (!preg_match('/^[a-z][a-z0-9_-]{1,31}$/', $name)) fail(400, '扩展 ID 无效');
     if ($section === 'themes') {
         $directory = $root.'/templates/'.$name;
@@ -84,7 +90,7 @@ if ($method === 'POST') {
         if ($action === 'save-settings') {
             $definitions = is_array($manifest) ? theme_manifest_settings($manifest) : [];
             if (!$definitions) fail(400, '该模板未声明可管理设置。');
-            try { $values = theme_settings_from_input($_POST, $definitions); }
+            try { $values = theme_settings_from_input($post, $definitions); }
             catch (Throwable $error) { fail(400, '模板设置无效。'); }
             h('INSERT INTO themes(name,version,enabled,config_json) VALUES(?,?,0,?) ON DUPLICATE KEY UPDATE version=VALUES(version),config_json=VALUES(config_json)', [$name,(string)($manifest['version'] ?? '1.0.0'),json_encode($values, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)]);
             invalidate('theme-settings:'.$name);
@@ -93,8 +99,8 @@ if ($method === 'POST') {
         }
 
         if ($action === 'delete') {
-            if (empty($_POST['confirm_token'])) confirmation_page('确认删除模板','将永久删除模板目录，此操作不可恢复。','theme.delete',['name'=>$name,'action'=>'delete'],$name);
-            require_confirmation('theme.delete',$name,(string)$_POST['confirm_token']);
+            if (empty($post['confirm_token'])) confirmation_page('确认删除模板','将永久删除模板目录，此操作不可恢复。','theme.delete',['name'=>$name,'action'=>'delete'],$name);
+            require_confirmation('theme.delete',$name,(string)$post['confirm_token']);
             if ($name === 'default') fail(400, '默认模板不能删除');
             $config=load_config();
             if (($config['theme'] ?? 'default') === $name) fail(409, '当前模板正在使用，请先启用其他模板');
@@ -120,17 +126,19 @@ if ($method === 'POST') {
     $manifestFile = is_file($directory.'/plugin.json') ? $directory.'/plugin.json' : $directory.'/manifest.json';
     $manifest = is_file($manifestFile) ? json_decode((string)file_get_contents($manifestFile), true) : null;
     if ($action === 'purge') {
-        if (empty($_POST['confirm_token'])) confirmation_page('确认永久删除插件','将永久删除插件目录、登记、迁移记录、任务、用户字段、搜索文档和全部插件数据表，此操作不可恢复。','plugin.purge',['name'=>$name,'action'=>'purge'],$name);
-        require_confirmation('plugin.purge',$name,(string)$_POST['confirm_token']);
+        if (empty($post['confirm_token'])) confirmation_page('确认永久删除插件','将永久删除插件目录、登记、迁移记录、任务、用户字段、搜索文档和全部插件数据表，此操作不可恢复。','plugin.purge',['name'=>$name,'action'=>'purge'],$name);
+        require_confirmation('plugin.purge',$name,(string)$post['confirm_token']);
         try { extension_purge_plugin($name); remove_tree($directory); if (is_dir($directory) || is_link($directory)) throw new RuntimeException('插件目录无法完全删除，请检查文件权限'); }
         catch(Throwable $error){extension_invalidate('plugins');fail(409,'插件永久删除失败：'.$error->getMessage());}
         extension_invalidate('plugins');
         redirect('/admin/plugins');
     }
-    if (!in_array($action, ['disable','uninstall'], true)) try { extension_validate_directory($directory, 'plugin', $name); } catch (Throwable $error) { fail(400, '插件预检失败：'.$error->getMessage()); }
+    if (in_array($action, ['install','upgrade','enable'], true)) try {
+        extension_validate_directory($directory, 'plugin', $name);
+    } catch (Throwable $error) { fail(400, '插件预检失败：'.$error->getMessage()); }
 
     if (!in_array($action, ['install','upgrade','enable','disable','uninstall'], true)) fail(400, '插件操作无效');
-    if ($action === 'uninstall' && empty($_POST['confirm_token'])) {
+    if ($action === 'uninstall' && empty($post['confirm_token'])) {
         $orphaned=!is_dir($directory);
         $token=confirmation_token('plugin.uninstall',$name);
         $pluginTitle=is_array($manifest)?(string)($manifest['title']??$name):$name;
@@ -140,11 +148,11 @@ if ($method === 'POST') {
         return;
     }
     if ($action === 'uninstall') {
-        require_confirmation('plugin.uninstall',$name,(string)$_POST['confirm_token']);
+        require_confirmation('plugin.uninstall',$name,(string)$post['confirm_token']);
         if (!is_dir($directory)) plugin_set_enabled_state(db(),$name,false);
     }
     if ($name === 'zip-remote-attachments' && in_array($action,['install','upgrade','enable'],true)) foreach (builtin_plugin_schema($name) as $sql) h($sql);
-    try { extension_plugin_lifecycle($name,$action,!empty($_POST['preserve_data'])); }
+    try { extension_plugin_lifecycle($name,$action,!empty($post['preserve_data']), approvedByAdmin: true); }
     catch(Throwable $error){extension_invalidate('plugins');fail(409,'插件操作失败：'.$error->getMessage());}
     extension_invalidate('plugins');
     redirect('/admin/plugins');
@@ -201,7 +209,7 @@ if ($section === 'themes') {
         $body .= '<p class="catalog-empty">没有通过检查的模板。</p>';
     }
 } else {
-    $body .= '<div class="admin-list-toolbar catalog-toolbar"><p class="admin-intro">插件会执行 PHP 代码，请在启用前人工审查。状态变更前会检查依赖、冲突和核心能力，卸载时可选择保留数据。</p></div>';
+    $body .= '<div class="admin-list-toolbar catalog-toolbar"><p class="admin-intro">插件会执行 PHP 代码，请在启用前人工审查。未应用的插件迁移须由运维人员通过 CLI 执行。状态变更前会检查依赖、冲突和核心能力，卸载时可选择保留数据。</p></div>';
     $pluginRow = static function (string $title, string $name, string $actions, string $description, string $meta, string $state, string $stateClass): string {
         return '<tr role="row"><th scope="row" role="rowheader"><strong class="catalog-plugin-title">'.e($title).'</strong>'
             .($title !== $name ? '<span class="catalog-meta">'.e($name).'</span>' : '')
@@ -248,7 +256,8 @@ if ($section === 'themes') {
         $actions .= $actionForm($name, 'uninstall', '强制永久删除', 'catalog-row-action is-danger');
         $rows .= $pluginRow($name, $name, $actions, '插件目录缺失', '已登记版本 '.$record['version'], $enabled ? '已启用' : '已停用', 'is-warning');
     }
-    $body .= '<div class="catalog-plugin-list"><table class="catalog-plugin-table" role="table" aria-label="插件列表">'
+    $body .= '<p class="admin-intro">安装、升级或启用前，请审核插件的 PHP 代码。启用的插件拥有与应用相同的 PHP 进程权限。</p>'
+        .'<div class="catalog-plugin-list"><table class="catalog-plugin-table" role="table" aria-label="插件列表">'
         .'<thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">插件</th><th scope="col" role="columnheader">说明</th><th scope="col" role="columnheader">状态</th></tr></thead><tbody role="rowgroup">'
         .($rows !== '' ? $rows : '<tr role="row"><td role="cell" colspan="3" class="catalog-empty">暂无可管理的插件。</td></tr>')
         .'</tbody></table></div>';
@@ -274,3 +283,4 @@ if ($section === 'plugins') {
 }
 page($section === 'themes' ? '模板管理' : '插件管理', $body.'</div>');
 return;
+}

@@ -32,6 +32,7 @@ body.default .card-tag-cloud a::before { content: '# '; color: var(--default-sec
 body.default .card-tag-cloud a:is(:hover, .active) { background: var(--default-main); color: var(--default-on-main); }
 body.default .card-tag-cloud a:is(:hover, .active)::before { color: inherit; }
 html.default-stable-layout { scrollbar-gutter: stable; }
+html.default-stable-layout[data-theme="dark"] { color-scheme: dark; background: #18171d; }
 body.default .card-webinfo .webinfo {
   margin: 0;
   padding: 2px 12px;
@@ -57,6 +58,7 @@ body.default .card-webinfo .item-count {
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
+body.default #rightside { grid-template-rows: repeat(2, 35px); }
 body.default #rightside > button { grid-row: 1; }
 body.default #rightside > a { grid-row: 2; }
 body.default #aside-content .toc-content { max-height: 45vh; overflow: auto; margin: 0; padding-left: 1.5rem; }

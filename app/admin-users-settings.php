@@ -1,6 +1,11 @@
 <?php
 declare(strict_types=1);
 
+function handle_admin_users_settings(\LiteBBS\Framework\Request $request): void
+{
+$path = $request->path;
+$method = $request->method;
+$post = $request->post;
 if (!in_array($path, ['/admin/users', '/admin/settings', '/admin/content'], true) || !in_array($method, ['GET', 'POST'], true)) return;
 
 if ($path === '/admin/content') {
@@ -25,18 +30,18 @@ if ($path === '/admin/content') {
         return;
     }
     require_post();
-    $id = (int)($_POST['id'] ?? 0);
-    $action = (string)($_POST['action'] ?? '');
+    $id = (int)($post['id'] ?? 0);
+    $action = (string)($post['action'] ?? '');
     if ($action === 'delete') {
-        if (empty($_POST['confirm_token'])) confirmation_page('确认永久删除','将永久删除主题、回复、修订和积分记录，此操作不可恢复。','topic.delete',['id'=>$id,'action'=>'delete'],(string)$id);
-        require_confirmation('topic.delete',(string)$id,(string)$_POST['confirm_token']);
+        if (empty($post['confirm_token'])) confirmation_page('确认永久删除','将永久删除主题、回复、修订和积分记录，此操作不可恢复。','topic.delete',['id'=>$id,'action'=>'delete'],(string)$id);
+        require_confirmation('topic.delete',(string)$id,(string)$post['confirm_token']);
         permanently_delete_topic($id);
         redirect('/admin/content');
     }
     $columns = ['pin' => 'is_pinned', 'lock' => 'is_locked'];
     if (!$id || !isset($columns[$action])) fail(400, '操作无效');
     $column = $columns[$action];
-    $value = filter_var($_POST['value'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 1]]);
+    $value = filter_var($post['value'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 1]]);
     if ($value === false || $value === null) fail(400, '状态值无效');
     moderate_topic($id, $column, $value, $action);
     redirect('/admin/content');
@@ -49,46 +54,38 @@ if ($method === 'POST') {
     require_post();
 
     if ($path === '/admin/users') {
-        $id = (int)($_POST['id'] ?? 0);
-        $role = (string)($_POST['role'] ?? 'member');
-        $status = (string)($_POST['status'] ?? 'active');
-        $developer = isset($_POST['is_developer']) ? 1 : 0;
+        $id = (int)($post['id'] ?? 0);
+        $role = (string)($post['role'] ?? 'member');
+        $status = (string)($post['status'] ?? 'active');
+        $developer = isset($post['is_developer']) ? 1 : 0;
         if (!$id || $id === (int)$actor['id'] || !in_array($role, ['member', 'moderator', 'admin'], true) || !in_array($status, ['active', 'disabled'], true)) fail(400, '用户操作无效');
-        $db = db();
-        $db->beginTransaction();
-        $target = h('SELECT role,status FROM users WHERE id=? FOR UPDATE', [$id])->fetch();
-        if (!$target) {
-            $db->rollBack();
-            fail(404, '用户不存在');
-        }
-        if ($role !== 'admin' || $status !== 'active') {
-            $activeAdmins = h('SELECT id FROM users WHERE role="admin" AND status="active" FOR UPDATE')->fetchAll(PDO::FETCH_COLUMN);
-            if ($target['role'] === 'admin' && $target['status'] === 'active' && count($activeAdmins) <= 1) {
-                $db->rollBack();
-                fail(409, '至少必须保留一名启用中的管理员');
+        \LiteBBS\Application\transaction_manager()->run(static function () use ($id, $actor, $role, $status, $developer): void {
+            $target = h('SELECT role,status FROM users WHERE id=? FOR UPDATE', [$id])->fetch();
+            if (!$target) fail(404, '用户不存在');
+            if (($role !== 'admin' || $status !== 'active') && $target['role'] === 'admin' && $target['status'] === 'active') {
+                $activeAdmins = h('SELECT id FROM users WHERE role="admin" AND status="active" ORDER BY id FOR UPDATE')->fetchAll(PDO::FETCH_COLUMN);
+                if (count($activeAdmins) <= 1) fail(409, '至少必须保留一名启用中的管理员');
             }
-        }
-        h('UPDATE users SET role=?,status=?,is_developer=? WHERE id=?', [$role, $status, $developer, $id]);
-        h('DELETE FROM sessions WHERE user_id=?', [$id]);
-        if ($id === (int)($_SESSION['uid'] ?? 0)) { start_session(); $_SESSION = []; session_destroy(); }
-        audit('user.updated', 'user', $id, ['role' => $role, 'status' => $status, 'is_developer' => $developer]);
-        extension_event_async('user.updated', ['user_id'=>$id,'actor_id'=>(int)$actor['id'],'role'=>$role,'status'=>$status,'is_developer'=>$developer]);
-        $db->commit();
+            h('UPDATE users SET role=?,status=?,is_developer=? WHERE id=?', [$role, $status, $developer, $id]);
+            h('DELETE FROM sessions WHERE user_id=?', [$id]);
+            audit('user.updated', 'user', $id, ['role' => $role, 'status' => $status, 'is_developer' => $developer]);
+            extension_enqueue_async_event('user.updated', ['user_id'=>$id,'actor_id'=>(int)$actor['id'],'role'=>$role,'status'=>$status,'is_developer'=>$developer]);
+        });
         redirect('/admin/users');
     }
 
-    $site = trim((string)($_POST['site'] ?? ''));
-    $registration = (string)($_POST['registration'] ?? '1');
-    $interval = (int)($_POST['post_interval'] ?? 0);
-    $topicRateMax = (int)($_POST['topic_rate_max'] ?? 0);
-    $topicRateWindow = (int)($_POST['topic_rate_window'] ?? 300);
-    $replyRateMax = (int)($_POST['reply_rate_max'] ?? 0);
-    $replyRateWindow = (int)($_POST['reply_rate_window'] ?? 300);
-    $locale = (string)($_POST['locale'] ?? 'zh-CN');
-    $seoHomeDescription = trim((string)($_POST['seo_home_description'] ?? ''));
-    $seoIndexing = (string)($_POST['seo_indexing'] ?? '1');
+    $site = trim((string)($post['site'] ?? ''));
+    $registration = (string)($post['registration'] ?? '1');
+    $interval = (int)($post['post_interval'] ?? 0);
+    $topicRateMax = (int)($post['topic_rate_max'] ?? 0);
+    $topicRateWindow = (int)($post['topic_rate_window'] ?? 300);
+    $replyRateMax = (int)($post['reply_rate_max'] ?? 0);
+    $replyRateWindow = (int)($post['reply_rate_window'] ?? 300);
+    $locale = (string)($post['locale'] ?? 'zh-CN');
+    $seoHomeDescription = trim((string)($post['seo_home_description'] ?? ''));
+    $seoIndexing = (string)($post['seo_indexing'] ?? '1');
     $seoVerification = [];
-    foreach (['google','bing','baidu','yandex','naver'] as $engine) $seoVerification[$engine] = trim((string)($_POST['seo_'.$engine.'_verification'] ?? ''));
+    foreach (['google','bing','baidu','yandex','naver'] as $engine) $seoVerification[$engine] = trim((string)($post['seo_'.$engine.'_verification'] ?? ''));
     if (text_length($site) < 2 || text_length($site) > 100 || !in_array($registration, ['0', '1'], true) || $interval < 0 || $interval > 3600 || $topicRateMax < 0 || $topicRateMax > 1000 || $replyRateMax < 0 || $replyRateMax > 1000 || $topicRateWindow < 1 || $topicRateWindow > 86400 || $replyRateWindow < 1 || $replyRateWindow > 86400 || !in_array($locale, ['zh-CN', 'en-US'], true) || text_length($seoHomeDescription) > 220 || !in_array($seoIndexing, ['0', '1'], true)) fail(400, '设置值无效');
     foreach ($seoVerification as $value) if ($value !== '' && (!preg_match('/^[\x21-\x7E]{1,512}$/', $value) || strlen($value) > 512)) fail(400, '站长平台验证码格式无效');
     $config['site'] = $site;
@@ -159,3 +156,4 @@ $body = '<form class="admin-settings-form" method="post" action="/admin/settings
     '<footer class="settings-actions"><p><strong>安全说明</strong> 配置会写入私有目录；保存不会修改模板、插件配置或现有内容。</p><button class="primary" type="submit">保存更改</button></footer></form>';
 page('站点设置', '<nav class="settings-sections" aria-label="设置分组"><a href="#site-general">社区信息</a><a href="#site-community">注册与发帖</a><a href="#site-search">搜索展示</a><a href="#site-verification">站长平台验证</a></nav>'.$body);
 return;
+}

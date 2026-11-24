@@ -3,33 +3,26 @@ declare(strict_types=1);
 
 $settings = theme_current_settings();
 $site = $c['site'] ?? 'LiteBBS';
-$isForumPage = $isHomePage || preg_match('~^/forum-(?:[2-9]|[1-9][0-9]+)$~D', $requestPath) === 1;
 $isCategoryPage = preg_match('~^/c/[0-9]+$~D', $requestPath) === 1;
-$isFeedPage = ($isForumPage || $isCategoryPage) && $indexable;
+$isFeedPage = ($isHomePage || $isCategoryPage) && $indexable;
 $slotContext = ['path'=>$requestPath, 'user'=>$user];
 $pageContext = $slotContext + ['title'=>$title, 'is_admin'=>false];
 $assets = '/templates/'.rawurlencode(basename(__DIR__)).'/assets/';
 
-$topicCount = null;
 $siteDays = null;
-$siteCharacters = null;
 $shortcuts = [
     ['#recent-posts', '全部', '◎'],
     ['/search', '发现', '✦'],
     [$user ? '/new' : '/register', $user ? '发帖' : '加入', '➤'],
 ];
 if ($isFeedPage) {
-    if ($isForumPage) {
-        if (preg_match('~\A<header class="home-heading"><div><h1>[^<]*</h1><span>([0-9,]+) [^<]*</span>~', $body, $count)) {
-            $topicCount = $count[1];
-            $siteCharacters = theme_public_content_characters();
-            $startDate = trim($settings['site_start_date'] ?? '');
-            if (preg_match('/\A(\d{4})-(\d{2})-(\d{2})\z/', $startDate, $dateParts)
-                && checkdate((int)$dateParts[2], (int)$dateParts[3], (int)$dateParts[1])) {
-                $start = new DateTimeImmutable($startDate);
-                $today = new DateTimeImmutable('today');
-                if ($start <= $today) $siteDays = $start->diff($today)->days;
-            }
+    if ($isHomePage) {
+        $startDate = trim($settings['site_start_date'] ?? '');
+        if (preg_match('/\A(\d{4})-(\d{2})-(\d{2})\z/', $startDate, $dateParts)
+            && checkdate((int)$dateParts[2], (int)$dateParts[3], (int)$dateParts[1])) {
+            $start = new DateTimeImmutable($startDate);
+            $today = new DateTimeImmutable('today');
+            if ($start <= $today) $siteDays = $start->diff($today)->days;
         }
         preg_match_all('~<a class="nav-item(?: active)?" href="(/c/[0-9]+)"><span>([^<]*)</span></a>~', $left, $categories, PREG_SET_ORDER);
         foreach (array_slice($categories, 0, 3) as $index => $category) {
@@ -139,24 +132,21 @@ if ($hasPostHero) {
 }
 ?>
 <!doctype html>
-<html lang="<?= e($c['locale'] ?? 'zh-CN') ?>"<?= ($isFeedPage || $isTopicPage) ? ' class="default-stable-layout"' : '' ?>>
+<html lang="<?= e($c['locale'] ?? 'zh-CN') ?>" class="default-stable-layout">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="icon" href="<?= e($assets.'512.png') ?>" type="image/png">
-  <?php if (($isForumPage && $isFeedPage) || $isTopicPage): ?>
-    <link rel="expect" href="#content-inner" blocking="render">
-  <?php endif; ?>
-  <?php if ($isForumPage && $isFeedPage): ?>
+  <?php if ($isHomePage && $isFeedPage): ?>
     <link rel="preload" as="image" href="<?= e($assets.'banner.webp') ?>" fetchpriority="high">
   <?php endif; ?>
   <?php if ($isFeedPage && $coverIndex > 0): ?>
     <link rel="preload" as="image" href="<?= e($assets.'default_cover.jpg') ?>">
   <?php endif; ?>
   <?= seo_head($title, $description, $indexable, $canonical, $c) ?>
+  <script src="<?= e($assets.'theme.js?v='.asset_version(__DIR__.'/assets/theme.js')) ?>"></script>
   <?= theme_runtime_assets($safe, $isFeedPage, $isTopicPage) ?>
   <link rel="stylesheet" href="<?= e(theme_stylesheet($safe, 'chrome.css')) ?>">
-  <script src="<?= e($assets.'theme.js?v='.asset_version(__DIR__.'/assets/theme.js')) ?>"></script>
   <?= extension_stylesheets($requestPath) ?>
   <?= extension_slot('head.assets', $slotContext) ?>
 </head>
@@ -168,7 +158,7 @@ if ($hasPostHero) {
       <div id="menus">
         <?php if ($hasPostHero): ?><a id="page-name" href="#top" hidden><?= $postTitle ?></a><?php endif; ?>
         <div class="menus_items">
-        <a href="/"<?= $isForumPage ? ' aria-current="page"' : '' ?>>首页</a>
+        <a href="/"<?= $isHomePage ? ' aria-current="page"' : '' ?>>首页</a>
         <div class="menus_item"><a href="#forum-categories">分区</a>
           <div class="menus_item_child"><a href="/">全部讨论</a><?= $left ?></div>
         </div>
@@ -222,7 +212,7 @@ if ($hasPostHero) {
   </header>
   <?= extension_slot('page.header.after', $pageContext) ?>
 
-  <?php if ($isForumPage && $isFeedPage): ?>
+  <?php if ($isHomePage && $isFeedPage): ?>
     <div id="home_top">
       <?php if (($settings['announcement'] ?? '') !== ''): ?>
         <div id="bbTimeList"><strong>公告</strong><div id="bbtalk"><a href="#forum-announcement"><?= e($settings['announcement']) ?></a></div><a href="#recent-posts" aria-label="查看主题">⟶</a></div>
@@ -320,21 +310,13 @@ if ($hasPostHero) {
         <section class="card-widget card-tags" id="forum-categories">
           <nav class="card-tag-cloud" aria-label="讨论分区"><a href="/">全部讨论</a><?= $left ?></nav>
         </section>
-        <?php if ($topicCount !== null): ?>
+        <?php if ($siteDays !== null): ?>
           <section class="card-widget card-webinfo" id="aside-site-info" aria-labelledby="aside-site-info-title">
             <h2 class="item-headline" id="aside-site-info-title">站点统计</h2>
             <dl class="webinfo">
               <div class="webinfo-item">
-                <dt class="webinfo-item-title">文章总数</dt>
-                <dd class="item-count" id="aside-topic-count"><?= e($topicCount) ?></dd>
-              </div>
-              <div class="webinfo-item">
                 <dt class="webinfo-item-title">建站天数</dt>
-                <dd class="item-count"><?= $siteDays === null ? '暂无数据' : e(number_format($siteDays).' 天') ?></dd>
-              </div>
-              <div class="webinfo-item">
-                <dt class="webinfo-item-title">全站字数</dt>
-                <dd class="item-count"><?= $siteCharacters === null ? '暂无数据' : e(number_format($siteCharacters).' 字') ?></dd>
+                <dd class="item-count"><?= e(number_format($siteDays).' 天') ?></dd>
               </div>
             </dl>
           </section>

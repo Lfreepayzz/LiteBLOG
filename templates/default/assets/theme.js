@@ -2,19 +2,20 @@
   const root = document.documentElement;
   const system = window.matchMedia('(prefers-color-scheme: dark)');
   const storageKey = 'litebbs-default-color-scheme';
+  let toggle;
   let mode;
   try { mode = localStorage.getItem(storageKey); } catch { /* Storage is optional. */ }
 
   const applyMode = () => {
     const dark = mode === 'dark' || (mode !== 'light' && system.matches);
     root.dataset.theme = dark ? 'dark' : 'light';
-    document.getElementById('theme-mode')?.setAttribute('aria-pressed', String(dark));
+    toggle?.setAttribute('aria-pressed', String(dark));
   };
   applyMode();
   system.addEventListener('change', applyMode);
 
   document.addEventListener('DOMContentLoaded', () => {
-    const toggle = document.getElementById('theme-mode');
+    toggle = document.getElementById('theme-mode');
     if (toggle) {
       applyMode();
       toggle.hidden = false;

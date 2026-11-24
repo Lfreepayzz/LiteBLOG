@@ -117,6 +117,7 @@
 
 .program-update-page .primary { min-height: 40px; }
 .program-update-page .primary:disabled { opacity: .65; cursor: wait; }
+.program-update-page .database-upgrade-form .primary:disabled { cursor: not-allowed; }
 
 @media (max-width: 480px) {
     .program-update-panel > h2,

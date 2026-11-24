@@ -29,16 +29,6 @@ function theme_page_size(string $theme, string $context): int
     return $sizes[$theme][$context];
 }
 
-function theme_home_page_path(string $theme): string
-{
-    static $paths = [];
-    if (!array_key_exists($theme, $paths)) {
-        $manifest = theme_pagination_manifest($theme);
-        $paths[$theme] = is_array($manifest) && ($manifest['pagination']['home_path'] ?? null) === 'forum' ? 'forum' : '';
-    }
-    return $paths[$theme];
-}
-
 function theme_manifest_settings(array $manifest): array
 {
     $definitions = $manifest['settings'] ?? [];
@@ -124,25 +114,10 @@ function theme_current_settings(): array
     return theme_settings((string)(load_config()['theme'] ?? 'default'));
 }
 
-/** Count the characters in public Markdown post bodies, including replies. */
+/** @deprecated The global character statistic is no longer collected. */
 function theme_public_content_characters(): ?int
 {
-    try {
-        $versions = cache_versions(['topics', 'categories']);
-        $key = 'public-content-characters:v1:'.$versions['topics'].':'.$versions['categories'];
-        [$characters] = public_cached($key, 300, static function (): array {
-            $count = h(
-                "SELECT COALESCE(SUM(CHAR_LENGTH(p.body_markdown)), 0)
-                 FROM posts p JOIN topics t ON t.id = p.topic_id JOIN categories c ON c.id = t.category_id
-                 WHERE p.status = 'normal' AND t.status = 'normal' AND c.is_visible = 1"
-            )->fetchColumn();
-            return [(int)$count];
-        });
-        return $characters;
-    } catch (PDOException $error) {
-        error_log('Could not count public content characters: '.$error->getMessage());
-        return null;
-    }
+    return null;
 }
 
 final class ThemeTrustedHtml
@@ -190,8 +165,10 @@ function theme_render_standard(string $view,array $variables,string $fallback): 
 function theme_runtime_directory(string $theme): string
 {
     $root=dirname(__DIR__).'/templates';$direct=$root.'/'.$theme;if(is_dir($direct)&&!is_link($direct)&&!is_link($direct.'/layout.php'))return $direct;
+    static $resolved=[];
+    if(array_key_exists($theme,$resolved))return $resolved[$theme];
     $match=null;foreach(is_dir($root)?new DirectoryIterator($root):[] as $item){if(!$item->isDir()||$item->isDot()||$item->isLink()||is_link($item->getPathname().'/layout.php'))continue;$manifest=json_decode((string)@file_get_contents($item->getPathname().'/theme.json'),true);if(($manifest['name']??null)!==$theme)continue;if($match!==null)return $root.'/default';$match=$item->getPathname();}if($match!==null)return $match;
-    return $root.'/default';
+    return $resolved[$theme]=$root.'/default';
 }
 
 function theme_resolve_view(string $view,array $variables,string $fallback,bool $allowTheme=true): string
