@@ -1,13 +1,9 @@
 
-<<<<<<< HEAD
-基于 PHP 和 MySQL 程序，提供主题与回复、分区管理、内容审核、审计日志、主题和插件扩展能力。
-=======
 LiteBLOG 是一个轻量 PHP + MySQL/ 博客程序，提供主题讨论、分区管理、用户管理、内容审核、审计日志、模板和扩展管理功能。
 
 ## 演示
 
 [演示](https://forum.lxi.be/)
-
 
 ## 优点
 - 体积极小，极致轻量化：源码仅  100KB左右，没有大量冗余代码、臃肿依赖包，
@@ -16,7 +12,6 @@ LiteBLOG 是一个轻量 PHP + MySQL/ 博客程序，提供主题讨论、分区
 - 支持模板  +  扩展机制：自带模板管理、扩展接口，方便改界面、按需加功能，不用改动核心代码。
 - 开源：源码开放、私有化部署，数据自己掌控，  界面清爽简约：原生适配移动端，没有繁杂多余组件。   
 
->>>>>>> 84c7183a52c93d4135c1a5a5b524e2c4506a3067
 
 ## 优点
 - 体积极小，极致轻量化：源码仅  100KB左右，没有大量冗余代码、臃肿依赖包，
@@ -30,7 +25,6 @@ LiteBLOG 是一个轻量 PHP + MySQL/ 博客程序，提供主题讨论、分区
 ![LiteBLOG Screenshot 1](https://raw.githubusercontent.com/Lfreepayzz/LiteBLOG/refs/heads/main/img/1.png)
 
 ![LiteBLOG Screenshot 2](https://raw.githubusercontent.com/Lfreepayzz/LiteBLOG/refs/heads/main/img/2.png)
-
 
 
 ## 功能
