@@ -194,7 +194,7 @@ if($path==='/admin/market'&&in_array($method,['GET','POST'],true)){
 }
 
 function program_update_root(): string { return dirname(__DIR__); }
-function program_update_repository(): string { return 'Lfreepayzz/LiteBBS'; }
+function program_update_repository(): string { return 'Lfreepayzz/LiteBLOG'; }
 function market_package_hash_valid(string $file, string $expectedHash): bool {
     $modified=@filemtime($file);$size=@filesize($file);
     if($modified===false||$size===false||!preg_match('/^[a-f0-9]{64}$/i',$expectedHash))return false;
