@@ -7,7 +7,10 @@ LiteBLOG 是一个轻量 PHP + MySQL/ 博客/论坛程序，提供主题讨论�
 
 ## 演示
 
-[演示](https://forum.lxi.be/)
+[博客演示地址](https://forum.lxi.be/)
+
+[论坛演示地址](https://bolgk.eu.org/)
+
 
 ## 优点
 - 体积极小，极致轻量化：源码仅  100KB左右，没有大量冗余代码、臃肿依赖包，
