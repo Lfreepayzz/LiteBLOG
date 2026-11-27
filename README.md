@@ -1,6 +1,10 @@
 
 LiteBLOG 是一个轻量 PHP + MySQL/ 博客程序，提供主题讨论、分区管理、用户管理、内容审核、审计日志、模板和扩展管理功能。
 
+仓库合并公告，以后统一使用这个仓库  https://github.com/Lfreepayzz/LiteBBS
+
+重大改版：升级以后数据库配置文件夹private修改为database ，database必须包含最新数据库，后台升级数据库
+
 ## 演示
 
 [演示](https://forum.lxi.be/)
@@ -98,7 +102,7 @@ ON `forum_db`.* TO 'forum_app'@'WEB_SERVER_IP';
 程序更新源固定为：
 
 ```text
-https://github.com/Lfreepayzz/LiteBLOG
+https://github.com/Lfreepayzz/LiteBBS
 ```
 
 在后台“程序更新”页面（`/admin/extensions`）可检查 `main` 分支的最新文件树。下载更新包后，由管理员确认覆盖更新。程序会在替换前备份已有的受管文件。
