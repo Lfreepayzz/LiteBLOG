@@ -1,5 +1,5 @@
 
-LiteBLOG 是一个轻量 PHP + MySQL/ 博客程序，提供主题讨论、分区管理、用户管理、内容审核、审计日志、模板和扩展管理功能。
+LiteBLOG 是一个轻量 PHP + MySQL/ 博客/论坛程序，提供主题讨论、分区管理、用户管理、内容审核、审计日志、模板和扩展管理功能。
 
 仓库合并公告，以后统一使用这个仓库  https://github.com/Lfreepayzz/LiteBBS
 
